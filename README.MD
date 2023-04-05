@@ -21,13 +21,13 @@ Displays the desktop heap usage % for current interactive session
 ![Alt text](screenshots/image1.png)
 
 
-PsExec.exe -s DesktopHeapDiag.exe
+PsExec.exe -s C:\Tools>DesktopHeapDiag.exe
 	
 Displays the desktop heap usage % for non-interactive session "System" (using PsExec from Sysinternals).
 
 ![Alt text](screenshots/image2.png)
 
-PsExec.exe -u "NT AUTHORITY\Network Service" DesktopHeapDiag.exe
+PsExec.exe -u "NT AUTHORITY\Network Service" C:\Tools>DesktopHeapDiag.exe
 
 Displays the desktop heap usage % for the non-interactive session "Network Service" (using PsExec from Sysinternals).
 
