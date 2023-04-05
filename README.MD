@@ -84,7 +84,8 @@ The following symptoms can occur:
 ## Troubleshooting
 Desktop heap usage is not currently tracked in the system, so it's not available through any performance counter or API.
 DesktopHeapDiag.exe can assess the usage of various desktop heaps by momentarily probing them with small allocations, until the limit is reached.
-Interactive desktop heaps can be assessed by directly running DesktopHeapDiag.exe. Non-interactive desktop heaps can be assessed with the help of PsExec from Sysinternals.
+Interactive desktop heaps can be assessed by directly running DesktopHeapDiag.exe. Non-interactive desktop heaps can be assessed with the help of PsExec from Sysinternals. Anything over 60% should be investigated. Restarting processes/services release all user objects, so it can be used to pinpoint the culprit. The number of User/GDI handles can also provide a clue.
+
 
 ## Limits
 
