@@ -32,7 +32,7 @@ DWORD get_sessionid()
 	DWORD* pdwSessionId = NULL;
 	DWORD bytesreturned = 0;
 
-	if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSSessionId, (LPWSTR*)&pdwSessionId, &bytesreturned))
+	if (!WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSSessionId, (LPWSTR*)&pdwSessionId, &bytesreturned))
 	{
 		wprintf_s(L"WTSQuerySesionInformation failed. Last error: %d. Aborting.\n", GetLastError());
 
@@ -44,39 +44,23 @@ DWORD get_sessionid()
 	return *pdwSessionId;
 }
 
-LPWSTR get_user()
+LPWSTR get_username()
 {
-	LPWSTR pwszUsername = NULL;
-	DWORD cbUsername = 0;
+	WCHAR szUsername[MAX_PATH] = {};
+	DWORD cbUsername = sizeof(szUsername);
 
-	if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, &pwszUsername, &cbUsername))
-	{
-		wprintf_s(L"WTSQuerySesionInformation failed. Last error: %d. Aborting.\n", GetLastError());
+	if (!GetUserNameW(szUsername, &cbUsername)) {
 
-		exit(-1);
+		wprintf_s(L"GetUserNameW failed. Last error: %d. \n", GetLastError());
 	}
 
-	//WTSFreeMemory(pwszUsername);
+	LPWSTR pszUsername = (LPWSTR)LocalAlloc(LMEM_ZEROINIT, cbUsername);
 
-	return pwszUsername;
+	wcscpy_s(pszUsername, 100, szUsername);
+
+	return pszUsername;
 }
 
-LPWSTR get_domain()
-{
-	LPWSTR pwszDomain = NULL;
-	DWORD cbDomain = 0;
-
-	if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSDomainName, &pwszDomain, &cbDomain))
-	{
-		wprintf_s(L"WTSQuerySesionInformation failed. Last error: %d. Aborting.\n", GetLastError());
-
-		exit(-1);
-	}
-
-	//WTSFreeMemory(pwszUsername);
-
-	return pwszDomain;
-}
 
 void get_limits() {
 	HKEY hKey;
@@ -84,9 +68,9 @@ void get_limits() {
 	LPCWSTR pCurrentPos = NULL;
 	DWORD dwBufferSize = sizeof(szBuffer);
 	WCHAR szSharedSection[] = L"SharedSection";
-	WCHAR szSharedHeapSize[10] = {};
-	WCHAR szInteractiveSize[10] = {};
-	WCHAR szNonInteractiveSize[10] = {};
+	WCHAR szSharedHeapSize[32] = {};
+	WCHAR szInteractiveSize[32] = {};
+	WCHAR szNonInteractiveSize[32] = {};
 	int i = 0;
 
 	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\SubSystems", 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
@@ -210,28 +194,39 @@ void probe_heap(int lAmountKB, int iWait) {
 
 	//Reporting
 	int iSessionID = get_sessionid();
+	//LPWSTR pUsername = get_username();
+
+	WCHAR szUsername[256] = {};
+	DWORD cbUsername = sizeof(szUsername);
+
+	if (!GetUserNameW(szUsername, &cbUsername)) {
+
+		wprintf_s(L"GetUserNameW failed. Last error: %d. \n", GetLastError());
+	}
+
 	float CurrentUsage = 0.0f;
+	
 
 	if (iSessionID > 0) {
 
-		wprintf_s(L"Allocated %d bytes (%d KB) from Interactive Desktop Heap for account %s\\%s\n", x * TotalSizeBytes, (x * TotalSizeBytes) / 1024, get_domain(), get_user());
+		wprintf_s(L"Allocated %d bytes (%d KB) from Interactive Desktop Heap for account %s\n", x * TotalSizeBytes, (x * TotalSizeBytes) / 1024, szUsername);
 
 		if (bLimitReached) {
 
 			CurrentUsage = ((((x * TotalSizeBytes) / (float)g_InteractiveLimitBytes) * 100) - 100) * -1;
 
-			wprintf_s(L"Interactive Desktop Heap is %.1f%% busy. Current limit: %d KB\n", CurrentUsage, g_InteractiveLimitBytes / 1024);
+			wprintf_s(L"Interactive Desktop Heap is %.1f%% busy. Current limit: %d KB\n\n", CurrentUsage, g_InteractiveLimitBytes / 1024);
 		}
 	}
 	else {
 
-		wprintf_s(L"Allocated %d bytes (%d KB) from Non-Interactive Desktop Heap for account %s\n", x * TotalSizeBytes, (x * TotalSizeBytes) / 1024, get_domain(), get_user());
+		wprintf_s(L"Allocated %d bytes (%d KB) from Non-Interactive Desktop Heap for account %s\n", x * TotalSizeBytes, (x * TotalSizeBytes) / 1024, szUsername);
 
 		if (bLimitReached) {
 
 			CurrentUsage = ((((x * TotalSizeBytes) / (float)g_NonInteractiveLimitBytes) * 100) - 100) * -1;
 
-			wprintf_s(L"Non-Interactive Desktop Heap is %.1f%% busy. Current limit: %d KB\n", CurrentUsage, g_NonInteractiveLimitBytes / 1024);
+			wprintf_s(L"Non-Interactive Desktop Heap is %.1f%% busy. Current limit: %d KB\n\n", CurrentUsage, g_NonInteractiveLimitBytes / 1024);
 		}
 	}
 
@@ -257,7 +252,7 @@ void print_help() {
 int wmain(int argc, LPWSTR* argv)
 {
 	std::wcout << "\n  DesktopHeapDiag - Desktop Heap Diagnostic Tool \n  https://github.com/leonardomsft/DesktopHeapDiag \n" << std::endl;
-
+		
 	get_limits();
 
 	int lAmountKB = 0;
