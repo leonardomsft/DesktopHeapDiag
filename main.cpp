@@ -209,28 +209,28 @@ void probe_heap(int lAmountKB, int iWait) {
 
 	if (iSessionID > 0) {
 
-		wprintf_s(L"Allocated %d bytes (%d KB) from Interactive Desktop Heap for account %s\n", x * TotalSizeBytes, (x * TotalSizeBytes) / 1024, szUsername);
+		//wprintf_s(L"Allocated %d bytes (%d KB) from Interactive Desktop Heap for account %s\n", x * TotalSizeBytes, (x * TotalSizeBytes) / 1024, szUsername);
 
 		if (bLimitReached) {
 
 			CurrentUsage = ((((x * TotalSizeBytes) / (float)g_InteractiveLimitBytes) * 100) - 100) * -1;
 
-			wprintf_s(L"Interactive Desktop Heap is %.1f%% busy. Current limit: %d KB\n\n", CurrentUsage, g_InteractiveLimitBytes / 1024);
+			wprintf_s(L"Session %d, User: %s: Interactive Desktop Heap is %.1f%% busy. Current limit: %d KB\n\n", iSessionID, szUsername, CurrentUsage, g_InteractiveLimitBytes / 1024);
 		}
 	}
 	else {
 
-		wprintf_s(L"Allocated %d bytes (%d KB) from Non-Interactive Desktop Heap for account %s\n", x * TotalSizeBytes, (x * TotalSizeBytes) / 1024, szUsername);
+		//wprintf_s(L"Allocated %d bytes (%d KB) from Non-Interactive Desktop Heap for account %s\n", x * TotalSizeBytes, (x * TotalSizeBytes) / 1024, szUsername);
 
 		if (bLimitReached) {
 
 			CurrentUsage = ((((x * TotalSizeBytes) / (float)g_NonInteractiveLimitBytes) * 100) - 100) * -1;
 
-			wprintf_s(L"Non-Interactive Desktop Heap is %.1f%% busy. Current limit: %d KB\n\n", CurrentUsage, g_NonInteractiveLimitBytes / 1024);
+			wprintf_s(L"Session %d, User: %s: Non-Interactive Desktop Heap is %.1f%% busy. Current limit: %d KB\n\n", iSessionID, szUsername, CurrentUsage, g_NonInteractiveLimitBytes / 1024);
 		}
 	}
 
-
+	Sleep(5000);
 }
 
 void print_help() {
