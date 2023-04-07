@@ -149,6 +149,19 @@ void probe_heap(int lAmountKB, int iWait) {
 	else
 		cCount = INT32_MAX;
 
+	//Session, User
+	int iSessionID = get_sessionid();
+	WCHAR szUsername[MAX_PATH] = {};
+	DWORD cbUsername = sizeof(szUsername);
+
+	if (!GetUserNameW(szUsername, &cbUsername)) {
+
+		wprintf_s(L"GetUserNameW failed. Last error: %d. \n", GetLastError());
+	}
+
+
+	wprintf_s(L"Probing the %s Desktop Heap in session %d for account %s...\n", iSessionID > 0 ? L"Interactive" : L"Non-Interactive", iSessionID, szUsername);
+
 	for (x = 0; x < cCount; x++)
 	{
 		swprintf_s(szClassName, 100, L"myWindowClass%d", x);
@@ -193,44 +206,28 @@ void probe_heap(int lAmountKB, int iWait) {
 	}
 
 	//Reporting
-	int iSessionID = get_sessionid();
-	//LPWSTR pUsername = get_username();
+	if (lAmountKB != NULL) {
 
-	WCHAR szUsername[256] = {};
-	DWORD cbUsername = sizeof(szUsername);
-
-	if (!GetUserNameW(szUsername, &cbUsername)) {
-
-		wprintf_s(L"GetUserNameW failed. Last error: %d. \n", GetLastError());
+		wprintf_s(L"Allocated %d bytes (%d KB).\n", x * TotalSizeBytes, (x * TotalSizeBytes) / 1024);
 	}
 
 	float CurrentUsage = 0.0f;
-	
 
-	if (iSessionID > 0) {
+	if (bLimitReached) {
 
-		//wprintf_s(L"Allocated %d bytes (%d KB) from Interactive Desktop Heap for account %s\n", x * TotalSizeBytes, (x * TotalSizeBytes) / 1024, szUsername);
-
-		if (bLimitReached) {
+		if (iSessionID > 0) {
 
 			CurrentUsage = ((((x * TotalSizeBytes) / (float)g_InteractiveLimitBytes) * 100) - 100) * -1;
 
-			wprintf_s(L"Session %d, User: %s: Interactive Desktop Heap is %.1f%% busy. Current limit: %d KB\n\n", iSessionID, szUsername, CurrentUsage, g_InteractiveLimitBytes / 1024);
 		}
-	}
-	else {
-
-		//wprintf_s(L"Allocated %d bytes (%d KB) from Non-Interactive Desktop Heap for account %s\n", x * TotalSizeBytes, (x * TotalSizeBytes) / 1024, szUsername);
-
-		if (bLimitReached) {
-
+		else {
 			CurrentUsage = ((((x * TotalSizeBytes) / (float)g_NonInteractiveLimitBytes) * 100) - 100) * -1;
 
-			wprintf_s(L"Session %d, User: %s: Non-Interactive Desktop Heap is %.1f%% busy. Current limit: %d KB\n\n", iSessionID, szUsername, CurrentUsage, g_NonInteractiveLimitBytes / 1024);
 		}
+
+		wprintf_s(L"Desktop Heap is %.1f%% busy. Current limit: %d KB\n\n", CurrentUsage, iSessionID > 0 ? (g_InteractiveLimitBytes / 1024) : (g_NonInteractiveLimitBytes / 1024));
 	}
 
-	Sleep(5000);
 }
 
 void print_help() {
